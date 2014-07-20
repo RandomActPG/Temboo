@@ -12,7 +12,7 @@ and copy this content into it.
 
 #define WIFI_SSID "IWillDestroyYou"
 #define WPA_PASSWORD "Nintendoo64"
-
+#define WLAN_SECURITY   WLAN_SEC_WPA2
 /* 
 The same TembooAccount.h file settings can be used for all Temboo SDK sketches.  
 Keeping your account information in a separate file means you can share the 

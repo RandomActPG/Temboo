@@ -1,47 +1,59 @@
+#include <Adafruit_CC3000.h>
+#include <ccspi.h>
 #include <SPI.h>
-#include <WiFi.h>
-#include <WiFiClient.h>
 #include <Temboo.h>
+#include <string.h>
+#include "utility/debug.h"
 #include "TembooAccount.h" // Contains Temboo account information
+#include "WifiDetails.h" //contains wifi details
 
-WiFiClient client;
+Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,
+                                         SPI_CLOCK_DIVIDER); // you can change this clock speed but DI
+
 
 int numRuns = 1;   // Execution count, so this doesn't run forever
 int maxRuns = 10;   // Maximum number of times the Choreo should be executed
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   
   // For debugging, wait until the serial console is connected.
   delay(4000);
   while(!Serial);
 
-  int wifiStatus = WL_IDLE_STATUS;
-
-  // Determine if the WiFi Shield is present.
-  Serial.print("\n\nShield:");
-  if (WiFi.status() == WL_NO_SHIELD) {
-    Serial.println("FAIL");
-
-    // If there's no WiFi shield, stop here.
-    while(true);
+  // Initialize the module
+Serial.println(F("\nInitialising the CC3000 ..."));
+  if (!cc3000.begin())
+  {
+    Serial.println(F("Unable to initialise the CC3000! Check your wiring?"));
+    while(1);
   }
 
   Serial.println("OK");
-
-  // Try to connect to the local WiFi network.
-  while(wifiStatus != WL_CONNECTED) {
-    Serial.print("WiFi:");
-    wifiStatus = WiFi.begin(WIFI_SSID, WPA_PASSWORD);
-
-    if (wifiStatus == WL_CONNECTED) {
-      Serial.println("OK");
-    } else {
-      Serial.println("FAIL");
-    }
-    delay(5000);
+  
+   // Delete any old connection data on the module
+  Serial.println(F("\nDeleting old connection profiles"));
+  if (!cc3000.deleteProfiles()) {
+    Serial.println(F("Failed!"));
+    while(1);
   }
 
+ 
+ // Attempt to connect to an access point
+  char *ssid = WIFI_SSID;             /* Max 32 chars */
+  Serial.print(F("\nAttempting to connect to ")); Serial.println(ssid);
+  
+  /* NOTE: Secure connections are not available in 'Tiny' mode! */
+  if (!cc3000.connectToAP(WIFI_SSID, WPA_PASSWORD, WLAN_SECURITY)) {
+    Serial.println(F("Failed!"));
+    while(1);
+  }
+   
+  Serial.println(F("Connected!"));
+  
+  /* Wait for DHCP to complete */
+  Serial.println(F("Request DHCP"));
+  while (!cc3000.checkDHCP())
   Serial.println("Setup complete.\n");
 }
 
